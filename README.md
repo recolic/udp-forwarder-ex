@@ -12,6 +12,8 @@ Inspired by a naive udp-forward. I want to test what would happen, if I change t
 
 ## Build
 
+- Dependency: https://github.com/recolic/rlib
+
 ```
 mkdir build && cd build
 cmake .. && make
