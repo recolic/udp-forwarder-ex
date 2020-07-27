@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(UDPForwarder)
-
 set(CMAKE_CXX_STANDARD 17)
+
+find_package(rlib)
+find_package(Threads)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DMALLOC_CHECK_=2")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -28,12 +30,13 @@ if(APPLE)
 endif()
 
 include_directories(./src)
-include_directories(./src/lib)
 
 # TODO
-set(SRC )
+set(SRC src/main.cc)
 
 add_executable(udp-forwarder ${SRC})
+target_link_libraries(udp-forwarder r)
+target_link_libraries(udp-forwarder Threads::Threads)
 
 # target_link_libraries(udp-forwarder -static-libgcc -static-libstdc++)
 #if(FOR_M32)
