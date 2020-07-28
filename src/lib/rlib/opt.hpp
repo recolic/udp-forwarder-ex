@@ -78,20 +78,6 @@ namespace rlib {
                 return *pos;
             }
         }
-
-        rlib::string getValueArg(const std::string &longName, const char *shortName)
-        { //getValueArg("--long", "-l") may be converted to getValueArg("--long", true).
-            return getValueArg(longName, shortName, true);
-        }
-
-        bool getBoolArg(const std::string &argName)
-        { //Return if it's defined.
-            auto pos = std::find(args.cbegin(), args.cend(), argName);
-            if(pos == args.cend()) return false;
-            args.erase(pos);
-            return true;
-        }
-
         rlib::string getValueArg(const std::string &longName, const std::string &shortName, bool required = true, const std::string &def = std::string())
         {
             using rlib::literals::operator "" _format;
@@ -106,6 +92,22 @@ namespace rlib {
                     return def;
             }
             return std::move(value);
+        }
+
+        rlib::string getValueArg(const std::string &longName, const char *shortName)
+        { //getValueArg("--long", "-l") may be converted to getValueArg("--long", true).
+            return getValueArg(longName, std::string(shortName));
+        }
+        rlib::string getValueArg(const std::string& argName, bool required, const char * def) {
+            return getValueArg(argName, required, std::string(def));
+        }
+
+        bool getBoolArg(const std::string &argName)
+        { //Return if it's defined.
+            auto pos = std::find(args.cbegin(), args.cend(), argName);
+            if(pos == args.cend()) return false;
+            args.erase(pos);
+            return true;
         }
 
         bool getBoolArg(const std::string &longName, const std::string &shortName)

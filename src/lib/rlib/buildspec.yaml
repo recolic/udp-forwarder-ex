@@ -9,7 +9,7 @@ phases:
     commands:
       - g++ --version
       - clang++ --version
-      - icpc --version
+      # - icpc --version # Intel CC on build machine expired...
   build:
     commands:
       - make

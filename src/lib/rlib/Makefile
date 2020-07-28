@@ -8,7 +8,7 @@ ARFLAGS = rcs
 PREFIX ?= /usr
 
 def:
-	@echo Run make install
+	@echo This library is header-only, and no need to compile. Run make install if you would like. 
 
 install_header:
 	[ ! -d $(PREFIX)/include/rlib ] || rm -rf $(PREFIX)/include/rlib
