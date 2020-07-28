@@ -5,34 +5,64 @@
 #include <string>
 using std::string;
 
+/*
+User
+      |----------------------|       |----------------------|       
+ ---> |PlainInbound          |  /==> |MiscInbound --PIPE-\  |
+      |       \--PIPE---\    |  |    |                    | |
+      |          MiscOutbound| =/    |         PlainOutbound| ----> UDP App
+      |----------------------|       |----------------------|       
+         UDP Forwarder Client          UDP Forwarder Server
+*/
+
 namespace Protocols {
-	// Handler holds the senderId=>nextHopFd mapping.
+	// Outbound holds the senderId=>nextHopFd mapping.
 	// senderId is "$ip@$port", for example, `fe80:8100::1@1080`. 
 	// Misc protocol may use duplicateSenderId to work on port migration.
 	// Any listener may use removeSenderId to disconnect a sender.
 	// Note: this interface works for both TCP and UDP.
-	struct BaseHandler : rlib::noncopyable {
-		BaseHandler(string outboundConfig) {
+	struct BaseOutbound : rlib::noncopyable {
+		BaseOutbound(string outboundConfig) {
 			loadConfig(outboundConfig);
 		}
-		virtual ~BaseHandler = default;
+		virtual ~BaseOutbound = default;
 
-		// Interfaces
+		// Init data structures.
 		virtual void loadConfig(string config) = 0;
+
+		// InboundThread calls this function. Check the mapping between senderId and serverConn, wake up listenThread, and deliver the msg. 
 		virtual void handleMessage(string binaryMessage, string senderId) = 0;
-		virtual void duplicateSenderId(string newSenderId, string oldSenderId) = 0;
-		virtual void removeSenderId(string senderId) = 0;
+
+		// Listen the PIPE. handleMessage will wake up this thread from epoll.
+		// Also listen the connection fileDescriptors.
+		virtual void listenForever(BaseInbound *previousHop) = 0;
+
+		// Inbound.listenForever MUST initialize this field. 
+		fd_t ipcPipeOutboundEnd = -1;
 	};
 
-	struct BaseListener : rlib::noncopyable {
-		BaseListener(string inboundConfig) {
+	struct BaseInbound : rlib::noncopyable {
+		BaseInbound(string inboundConfig) {
 			loadConfig(inboundConfig);
 		}
-		virtual ~BaseListener = default;
+		virtual ~BaseInbound = default;
 
+		// Init data structures.
 		virtual void loadConfig(string config) = 0;
-		virtual void listenForever(BaseHandler *nextHop) = 0;
+
+		// OutboundThread calls this function. Wake up 'listenForever' thread, and send back a message. Outbound provides the senderId.
+		virtual void handleMessage(string binaryMessage, string senderId) = 0;
+
+		// Listen the addr:port in config, for inbound connection.
+		// Also listen the accepted connection fileDescriptors, and listen the PIPE.
+		virtual void listenForever(BaseOutbound *nextHop) = 0;
+
+		// Inbound.listenForever MUST initialize this field. 
+		fd_t ipcPipeInboundEnd = -1;
 	};
+
+	// TODO: PIPE only works on linux epoll. The windows epoll only works on SOCKET. 
+	//       Do this if you would like to support windows. 
 }
 
 #endif

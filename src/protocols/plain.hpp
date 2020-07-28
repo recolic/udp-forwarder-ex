@@ -8,7 +8,7 @@
 #include <common.hpp>
 
 namespace Protocols {
-	class PlainInboundListener : public BaseListener {
+	class PlainInbound : public BaseInbound {
 	public:
 		virtual loadConfig(string config) override {
 			auto ar = rlib::string(config).split('@'); // Also works for ipv6.
@@ -18,7 +18,9 @@ namespace Protocols {
 			listenPort = ar[2].as<uint16_t>();
 
 		}
-		virtual listenForever(BaseHandler* nextHop) override {
+		virtual listenForever(BaseOutbound* nextHop) override {
+			std::tie(this->ipcPipeInboundEnd, nextHop->ipcPipeOutboundEnd) = mk_tcp_pipe();
+
 			auto listenFd = rlib::quick_listen(listenAddr, listenPort, true);
 			rlib_defer([&] {close(listenFd);});
 
@@ -34,6 +36,7 @@ namespace Protocols {
 			rlog.info("PlainListener listening [{}]:{} ...", listenAddr, listenPort);
 			while (true) {
 				// ...
+				// epoll
 			}
 
 		}
@@ -43,9 +46,8 @@ namespace Protocols {
 		uint16_t listenPort;
 	};
 
-	using PlainOutboundListener = PlainInboundListener;
 
-	class PlainOutboundHandler {
+	class PlainOutbound : public BaseOutbound {
 
 	};
 }
