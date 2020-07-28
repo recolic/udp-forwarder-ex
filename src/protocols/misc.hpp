@@ -16,9 +16,13 @@ namespace Protocols {
 			// listenPort = ar[2].as<uint16_t>();
 			psk = ar[3];
 
+			// listen these ports.
 
 		}
 		virtual listenForever(BaseHandler* nextHop) override {
+
+			// if message arrives:
+			// send to handler. 
 
 		}
 

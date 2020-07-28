@@ -12,7 +12,7 @@ struct ConnectionMapping {
     std::unordered_multimap<fd_t, string> server2client;
     static string clientInfoAsKey(string ip, uint16_t port) {
         // Also works for ipv6. We just want to eliminate duplication, rather than make it easy to read. 
-        return ip + "@" + port;
+        return ip + '@' + port;
     }
 };
 
