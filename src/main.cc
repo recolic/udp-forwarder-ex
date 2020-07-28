@@ -1,18 +1,26 @@
 #include <rlib/stdio.hpp>
 #include <rlib/opt.hpp>
+#include <rlib/sys/os.hpp>
 #include "common.hpp"
 
 rlib::logger rlog(std::cerr);
-
 using namespace rlib::literals;
 
-int main(int argc, char **argv) {
+#if RLIB_OS_ID == OS_WINDOWS
+    #include <thread>
+    using namespace std::chrono_literals;
+    #define windows_main main
+#else
+    #define real_main main
+#endif
+
+int real_main(int argc, char **argv) {
     rlib::opt_parser args(argc, argv);
     if(args.getBoolArg("--help", "-h")) {
-        rlib::println("Usage: {} -i $InboundConfig -o $OutboundConfig [--log=error/info/verbose/debug]"_rs.format(args.getSelf()));
-        rlib::println("  InboundConfig and OutboundConfig are in this format: ");
-        rlib::println("  '$method:$params', available methods: ");
-        rlib::println("  'plain:$addr:$port', 'misc:$addr:$portRange:$psk'");
+        rlog.info("Usage: {} -i $InboundConfig -o $OutboundConfig [--log=error/info/verbose/debug]"_rs.format(args.getSelf()));
+        rlog.info("  InboundConfig and OutboundConfig are in this format: ");
+        rlog.info("  '$method:$params', available methods: ");
+        rlog.info("  'plain:$addr:$port', 'misc:$addr:$portRange:$psk'");
         return 0;
     }
     auto inboundConfig = args.getValueArg("-i");
@@ -33,4 +41,19 @@ int main(int argc, char **argv) {
     // Forwarder(inboundConfig, outboundConfig).run_forever();
 
     return 0;
+}
+
+// This wrapper (maybe) makes debug easier. 
+int windows_main(int argc, char** argv) {
+    // fucking windows behaves strangely on exception. 
+    // Let's catch all exceptions and print. 
+    try {
+        return real_main(argc, argv);
+    }
+    catch (std::exception& e) {
+        rlog.fatal(e.what());
+        rlog.warning("Sleep 5s before exit...");
+        std::this_thread::sleep_for(5s);
+        return 2;
+    }
 }
