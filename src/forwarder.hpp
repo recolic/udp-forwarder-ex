@@ -31,7 +31,11 @@ public:
             ptrOutbound = nullptr; // TODO
         else if (outboundConfig.starts_with("misc"))
             ptrOutbound = nullptr; // TODO
+    }
 
+    ~Forwarder() {
+        if (ptrInbound) delete ptrInbound;
+        if (ptrOutbound) delete ptrOutbound;
     }
 
 

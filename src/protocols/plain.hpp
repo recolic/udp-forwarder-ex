@@ -35,7 +35,7 @@ namespace Protocols {
 			char buffer[DGRAM_BUFFER_SIZE];
 			// WARN: If you want to modify this program to work for both TCP and UDP, PLEASE use rlib::sockIO::recv instead of fixed buffer.
 			
-			rlog.info("PlainListener listening [{}]:{} ...", listenAddr, listenPort);
+			rlog.info("PlainListener listening InboundPort [{}]:{} ...", listenAddr, listenPort);
 			while (true) {
 				// ...
 				// epoll
