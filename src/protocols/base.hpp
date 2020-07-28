@@ -18,8 +18,6 @@ User
 namespace Protocols {
 	// Outbound holds the senderId=>nextHopFd mapping.
 	// senderId is "$ip@$port", for example, `fe80:8100::1@1080`. 
-	// Misc protocol may use duplicateSenderId to work on port migration.
-	// Any listener may use removeSenderId to disconnect a sender.
 	// Note: this interface works for both TCP and UDP.
 	struct BaseOutbound : rlib::noncopyable {
 		BaseOutbound(string outboundConfig) {
