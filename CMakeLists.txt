@@ -32,8 +32,7 @@ endif()
 include_directories(./src)
 include_directories(./src/lib)
 
-# TODO
-set(SRC src/main.cc)
+AUX_SOURCE_DIRECTORY(src SRC)
 
 add_executable(udp-forwarder ${SRC})
 target_link_libraries(udp-forwarder Threads::Threads)
@@ -42,4 +41,15 @@ target_link_libraries(udp-forwarder Threads::Threads)
 #if(FOR_M32)
 #    set_target_properties(... PROPERTIES COMPILE_FLAGS -m32 LINK_FLAGS -m32 )
 #endif(FOR_M32)
+
+#macro(print_all_variables)
+#    message(STATUS "print_all_variables------------------------------------------{")
+#    get_cmake_property(_variableNames VARIABLES)
+#    foreach (_variableName ${_variableNames})
+#        message(STATUS "${_variableName}=${${_variableName}}")
+#    endforeach()
+#    message(STATUS "print_all_variables------------------------------------------}")
+#endmacro()
+#
+#print_all_variables()
 

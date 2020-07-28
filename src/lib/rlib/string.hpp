@@ -374,6 +374,26 @@ namespace rlib {
             return *this;
         }
 
+        bool starts_with(const std::string &what) const {
+            if(size() < what.size()) return false;
+
+            std::string::value_type diffBits = 0;
+            for(auto i = 0; i < what.size(); ++i) {
+                diffBits = diffBits | (what[i] ^ (*this)[i]);
+            }
+            return diffBits == 0;
+        }
+        bool ends_with(const std::string &what) const {
+            if(size() < what.size()) return false;
+
+            std::string::value_type diffBits = 0;
+            auto offset = size() - what.size();
+            for(auto i = 0; i < what.size(); ++i) {
+                diffBits = diffBits | (what[i] ^ (*this)[offset+i]);
+            }
+            return diffBits == 0;
+        }
+
         template <typename... Args>
         string &format(Args... args) {
             return operator=(std::move(impl::format_string(*this, args ...)));

@@ -1,14 +1,14 @@
 #include <rlib/stdio.hpp>
 #include <rlib/opt.hpp>
 #include <rlib/sys/os.hpp>
+#include <thread>
 #include "common.hpp"
 
 rlib::logger rlog(std::cerr);
 using namespace rlib::literals;
+using namespace std::chrono_literals;
 
 #if RLIB_OS_ID == OS_WINDOWS
-    #include <thread>
-    using namespace std::chrono_literals;
     #define windows_main main
 #else
     #define real_main main

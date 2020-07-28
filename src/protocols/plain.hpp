@@ -10,6 +10,7 @@
 namespace Protocols {
 	class PlainInbound : public BaseInbound {
 	public:
+		using BaseInbound::BaseInbound;
 		virtual loadConfig(string config) override {
 			auto ar = rlib::string(config).split('@'); // Also works for ipv6.
 			if (ar.size() != 3)
@@ -28,6 +29,7 @@ namespace Protocols {
 			if(epollFd == -1)
 				throw std::runtime_error("Failed to create epoll fd.");
 			epoll_add_fd(epollFd, listenFd);
+			epoll_add_fd(epollFd, ipcPipeInboundEnd);
 
 			epoll_event events[MAX_EVENTS];
 			char buffer[DGRAM_BUFFER_SIZE];
@@ -48,6 +50,8 @@ namespace Protocols {
 
 
 	class PlainOutbound : public BaseOutbound {
+	public:
+		using BaseOutbound::BaseOutbound;
 
 	};
 }
