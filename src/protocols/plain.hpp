@@ -66,19 +66,21 @@ namespace Protocols {
 			auto onEvent = [&](auto activeFd) {
 				if (activeFd == ipcPipe) {
 					// Outbound gave me a message to forward! Send it. 
+                    rlog.debug("Inbound event: from outbound msg. ");
 					auto targetClientId = rlib::sockIO::recv_msg(activeFd);
 					auto msg = rlib::sockIO::recv_msg(activeFd);
 
 					auto clientAddr = ClientIdUtils::parseClientId(targetClientId);
-					auto status = sendto(udpSenderSocket, msg.data(), msg.size(), 0, &clientAddr.addr, clientAddr.len);
+					auto status = sendto(listenFd, msg.data(), msg.size(), 0, &clientAddr.addr, clientAddr.len);
 					dynamic_assert(status != -1, "sendto failed");
 				}
 				else if (activeFd == listenFd) {
+                    rlog.debug("Inbound event: from client msg. ");
 					SockAddr clientAddr;
 					auto msgLength = recvfrom(activeFd, msgBuffer.data(), msgBuffer.size(), 0, &clientAddr.addr, &clientAddr.len);
 					dynamic_assert(msgLength != -1, "recvfrom failed");
 
-					forwardMessageToOutbound(msgBuffer.substr(msgLength), ClientIdUtils::makeClientId(clientAddr));
+					forwardMessageToOutbound(msgBuffer.substr(0, msgLength), ClientIdUtils::makeClientId(clientAddr));
 				}
 			};
 
@@ -136,6 +138,7 @@ namespace Protocols {
 			std::string msgBuffer(DGRAM_BUFFER_SIZE, '\0');
 			auto onEvent = [&](auto activeFd) {
 				if (activeFd == ipcPipe) {
+                    rlog.debug("Outbound event: from inbound msg. ");
 					// Inbound gave me a message to forward! Send it. 
 					auto targetClientId = rlib::sockIO::recv_msg(activeFd);
 					auto msg = rlib::sockIO::recv_msg(activeFd);
@@ -146,18 +149,21 @@ namespace Protocols {
 						rlib::sockIO::quick_send(iter->second, msg); // udp
 					}
 					else {
+                        rlog.debug("create new conn to server. ");
 						// This clientId is new. I don't know how to listen many sockets for response, so I just issue `connect` just like TCP does. 
 						auto connFd = rlib::quick_connect(serverAddr, serverPort, true);
 						epoll_add_fd(epollFd, connFd);
 						connectionMap.add(targetClientId, connFd);
 						rlib::sockIO::quick_send(connFd, msg); // udp
+                        // send(connFd, msg.data(), msg.size(), MSG_DONTWAIT);
 					}
 				}
 				else {
+                    rlog.debug("Outbound msg: from server msg. ");
 					// Message from some connFd. Read and forward it. 
-					auto status = recv(activeFd, msgBuffer.data(), msgBuffer.size(), 0);
-					dynamic_assert(status != -1, "recv failed");
-					if (status == 0) {
+					auto msgLength = recv(activeFd, msgBuffer.data(), msgBuffer.size(), 0);
+					dynamic_assert(msgLength != -1, "recv failed");
+					if (msgLength == 0) {
 						// TODO: close the socket, and notify Inbound to destory data structures.
 						epoll_del_fd(epollFd, activeFd);
 						connectionMap.del(activeFd);
@@ -166,7 +172,7 @@ namespace Protocols {
 
 					dynamic_assert(connectionMap.server2client.count(activeFd) > 0, "connectionMap MUST contain server connfd. ");
 
-					forwardMessageToInbound(msgBuffer.substr(0, status), connectionMap.server2client.at(activeFd));
+					forwardMessageToInbound(msgBuffer.substr(0, msgLength), connectionMap.server2client.at(activeFd));
 				}
 			};
 

@@ -23,7 +23,7 @@ struct SockAddr {
         sockaddr_in in4;
         sockaddr_in6 in6;
     };
-    socklen_t len;
+    socklen_t len = sizeof(sockaddr_storage);
 };
 
 struct ClientIdUtils {
