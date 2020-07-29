@@ -38,7 +38,7 @@ namespace Protocols {
 		virtual void listenForever(BaseInbound *previousHop) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
-		sockfd_t ipcPipe = -1;
+		volatile sockfd_t ipcPipe = -1;
 	};
 
 	struct BaseInbound : rlib::noncopyable {
@@ -58,7 +58,7 @@ namespace Protocols {
 		virtual void listenForever(BaseOutbound *nextHop) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
-		sockfd_t ipcPipe = -1;
+		volatile sockfd_t ipcPipe = -1;
 	};
 
 	// TODO: PIPE only works on linux epoll. The windows epoll only works on SOCKET. 

@@ -26,9 +26,7 @@ struct SockAddr {
     socklen_t len;
 };
 
-struct ConnectionMapping {
-    std::unordered_map<string, fd_t> client2server;
-    std::unordered_multimap<fd_t, string> server2client;
+struct ClientIdUtils {
     static string makeClientId(const SockAddr &osStruct) {
         // ClientId is a binary string.
         static_assert(sizeof(osStruct) == sizeof(SockAddr), "error: programming error detected.");
@@ -91,6 +89,7 @@ inline auto mk_tcp_pipe() {
 #define dynamic_assert(expr, msg) do { \
     if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":{} F({}), {}. Errno={}, strerror={}", __LINE__, __func__, (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
 } while(false)
+
 
 
 #endif
