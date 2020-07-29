@@ -7,18 +7,21 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <ws2tcpip.h>
+namespace rlib {
+    using ssize_t = int;
+}
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 #endif
 
 // Include winsock2.h before windows.h
 #include <cerrno>
 #include <cstdlib>
-#include <unistd.h>
 #include <string>
 #include <stdexcept>
 

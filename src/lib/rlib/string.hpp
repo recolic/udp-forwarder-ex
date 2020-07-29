@@ -131,7 +131,7 @@ namespace rlib {
         inline char *_format_string_c_helper(const char *fmt, ...)
         {
             int n;
-            int size = std::strlen(fmt);
+            size_t size = std::strlen(fmt);
             char *p, *np;
             va_list ap;
 
@@ -186,10 +186,10 @@ namespace rlib {
             return this->c_str();
         }
         std::string as(as_helper<std::string>) const {
-            return std::move(*this);
+            return *this;
         }
         rlib::string as(as_helper<rlib::string>) const {
-            return std::move(*this);
+            return *this;
         }
         char as(as_helper<char>) const {
             if(size() > 1)

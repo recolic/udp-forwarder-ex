@@ -30,7 +30,7 @@ namespace Protocols {
 			rlib_defer([&] {close(listenFd);});
 
 			auto epollFd = epoll_create1(0);
-			dynamic_assert(epollFd != -1, "epoll_create1 failed");
+			dynamic_assert((int)epollFd != -1, "epoll_create1 failed");
 			epoll_add_fd(epollFd, listenFd);
 			epoll_add_fd(epollFd, ipcPipe);
 
@@ -46,7 +46,7 @@ namespace Protocols {
 					auto msg = rlib::sockIO::recv_msg(activeFd);
 
 					auto clientAddr = ConnectionMapping::parseClientId(targetClientId);
-					auto status = sendto(udpSenderSocket, msg.data(), msg.size(), clientAddr.addr, clientAddr.len);
+					auto status = sendto(udpSenderSocket, msg.data(), msg.size(), 0, &clientAddr.addr, clientAddr.len);
 					dynamic_assert(status != -1, "sendto failed");
 				}
 				else if (activeFd == listenFd) {

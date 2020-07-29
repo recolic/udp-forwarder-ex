@@ -28,36 +28,32 @@ struct ConnectionMapping {
     std::unordered_multimap<fd_t, string> server2client;
     static string makeClientId(const SockAddr &osStruct) {
         // ClientId is a binary string.
+        static_assert(sizeof(osStruct) == sizeof(SockAddr), "error: programming error detected.");
         string result(sizeof(osStruct), '\0');
         std::memcpy(result.data(), &osStruct, sizeof(osStruct));
         return result;
     }
-    static void parseClientId(const string &clientId, SockAddr &output) {
-        static_assert(sizeof(output) == sizeof(SockAddr), "error: programming error detected.");
-        if (clientId.size() != sizeof(output))
+    static SockAddr parseClientId(const string &clientId) {
+        SockAddr result;
+        if (clientId.size() != sizeof(result))
             throw std::invalid_argument("parseClientId, invalid input binary string length.");
-        std::memcpy(&output, clientId.data(), sizeof(output));
+        std::memcpy(&result, clientId.data(), sizeof(result));
+        return result;
     }
 };
 
 inline void epoll_add_fd(fd_t epollFd, sockfd_t fd) {
-    epoll_event event {
-        .events = EPOLLIN,
-        .data = {
-                .fd = fd,
-        }
-    };
+    epoll_event event;
+    event.events = EPOLLIN;
+    event.data.fd = fd;
     auto ret1 = epoll_ctl(epollFd, EPOLL_CTL_ADD, fd, &event);
     if(ret1 == -1)
         throw std::runtime_error("epoll_ctl failed.");
 }
 inline void epoll_del_fd(fd_t epollFd, sockfd_t fd) {
-    epoll_event event {
-        .events = EPOLLIN,
-        .data = {
-                .fd = fd,
-        }
-    };
+    epoll_event event;
+    event.events = EPOLLIN;
+    event.data.fd = fd;
     auto ret1 = epoll_ctl(epollFd, EPOLL_CTL_DEL, fd, &event); // Can be nullptr since linux 2.6.9
     if(ret1 == -1)
         throw std::runtime_error("epoll_ctl failed.");
@@ -90,7 +86,7 @@ inline auto mk_tcp_pipe() {
 }
 
 #define dynamic_assert(expr, msg) do { \
-    if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":" __LINE__ " F(" __func__ "), {}. Errno={}, strerror={}", (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
+    if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":{} F({}), {}. Errno={}, strerror={}", __LINE__, __func__, (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
 } while(false)
 
 

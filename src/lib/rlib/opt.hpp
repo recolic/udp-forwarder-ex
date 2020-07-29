@@ -67,7 +67,7 @@ namespace rlib {
             if(required && pos == args.cend())
                 throw std::invalid_argument("Required argument '{}' not provided."_format(argName));
             if(pos == args.cend())
-                return std::move(def);
+                return def;
             rlib_defer(([&, pos]{if(!useEqualSym) args.erase(pos+1); args.erase(pos);}));
             if(useEqualSym)
                 return pos->substr(argName.size() + 1);
@@ -91,7 +91,7 @@ namespace rlib {
                 else
                     return def;
             }
-            return std::move(value);
+            return value;
         }
 
         rlib::string getValueArg(const std::string &longName, const char *shortName)
