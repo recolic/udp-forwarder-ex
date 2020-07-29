@@ -22,9 +22,6 @@ namespace Protocols {
 	// senderId is "$ip@$port", for example, `fe80:8100::1@1080`. 
 	// Note: this interface works for both TCP and UDP.
 	struct BaseOutbound : rlib::noncopyable {
-		BaseOutbound(string outboundConfig) {
-			loadConfig(outboundConfig);
-		}
 		virtual ~BaseOutbound() = default;
 
 		// Init data structures.
@@ -42,9 +39,6 @@ namespace Protocols {
 	};
 
 	struct BaseInbound : rlib::noncopyable {
-		BaseInbound(string inboundConfig) {
-			loadConfig(inboundConfig);
-		}
 		virtual ~BaseInbound() = default;
 
 		// Init data structures.

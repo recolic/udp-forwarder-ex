@@ -15,14 +15,20 @@ class Forwarder {
 public:
     Forwarder(const rlib::string &inboundConfig, const rlib::string &outboundConfig) {
         if (inboundConfig.starts_with("plain"))
-            ptrInbound = new Protocols::PlainInbound(inboundConfig);
+            ptrInbound = new Protocols::PlainInbound;
         else if (inboundConfig.starts_with("misc"))
             ptrInbound = nullptr; // TODO
+        else
+            throw std::invalid_argument("Unknown protocol in inboundConfig " + inboundConfig);
+        ptrInbound->loadConfig(inboundConfig);
 
         if (outboundConfig.starts_with("plain"))
-            ptrOutbound = nullptr; // TODO
+            ptrOutbound = new Protocols::PlainOutbound;
         else if (outboundConfig.starts_with("misc"))
             ptrOutbound = nullptr; // TODO
+        else
+            throw std::invalid_argument("Unknown protocol in outboundConfig " + outboundConfig);
+        ptrOutbound->loadConfig(outboundConfig);
     }
 
     ~Forwarder() {

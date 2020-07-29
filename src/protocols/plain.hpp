@@ -34,7 +34,6 @@ namespace Protocols {
 
 	class PlainInbound : public BaseInbound {
 	public:
-		using BaseInbound::BaseInbound;
 		virtual void loadConfig(string config) override {
 			auto ar = rlib::string(config).split('@'); // Also works for ipv6.
 			if (ar.size() != 3)
@@ -104,7 +103,6 @@ namespace Protocols {
 
 	class PlainOutbound : public BaseOutbound {
 	public:
-		using BaseOutbound::BaseOutbound;
 		virtual void loadConfig(string config) override {
 			auto ar = rlib::string(config).split('@'); // Also works for ipv6.
 			if (ar.size() != 3)
