@@ -26,13 +26,13 @@ struct SockAddr {
 struct ConnectionMapping {
     std::unordered_map<string, fd_t> client2server;
     std::unordered_multimap<fd_t, string> server2client;
-    static string makeClientId(const SockAddr &osStrust) const {
+    static string makeClientId(const SockAddr &osStruct) {
         // ClientId is a binary string.
         string result(sizeof(osStruct), '\0');
-        std::memcpy(result.data(), &osStruct, sizeof(osStrust));
+        std::memcpy(result.data(), &osStruct, sizeof(osStruct));
         return result;
     }
-    static void parseClientId(const string &clientId, SockAddr &output) const {
+    static void parseClientId(const string &clientId, SockAddr &output) {
         static_assert(sizeof(output) == sizeof(SockAddr), "error: programming error detected.");
         if (clientId.size() != sizeof(output))
             throw std::invalid_argument("parseClientId, invalid input binary string length.");
@@ -40,7 +40,7 @@ struct ConnectionMapping {
     }
 };
 
-inline void epoll_add_fd(fd_t epollFd, fd_t fd) {
+inline void epoll_add_fd(fd_t epollFd, sockfd_t fd) {
     epoll_event event {
         .events = EPOLLIN,
         .data = {
@@ -51,7 +51,7 @@ inline void epoll_add_fd(fd_t epollFd, fd_t fd) {
     if(ret1 == -1)
         throw std::runtime_error("epoll_ctl failed.");
 }
-inline void epoll_del_fd(fd_t epollFd, fd_t fd) {
+inline void epoll_del_fd(fd_t epollFd, sockfd_t fd) {
     epoll_event event {
         .events = EPOLLIN,
         .data = {
@@ -79,7 +79,7 @@ inline auto mkpipe() {
 */
 
 inline auto mk_tcp_pipe() {
-    fd_t connfd_cli_side, connfd_srv_side;
+    sockfd_t connfd_cli_side, connfd_srv_side;
     auto listenfd = rlib::quick_listen("::1", TCP_TMP_PORT_NUMBER);
     auto serverThread = std::thread([&] {
         connfd_srv_side = rlib::quick_accept(listenfd);

@@ -3,6 +3,7 @@
 #include <rlib/sys/os.hpp>
 #include <thread>
 #include "common.hpp"
+#include "forwarder.hpp"
 
 rlib::logger rlog(std::cerr);
 using namespace rlib::literals;
@@ -38,7 +39,7 @@ int real_main(int argc, char **argv) {
     else
         throw std::runtime_error("Unknown log level: " + log_level);
 
-    // Forwarder(inboundConfig, outboundConfig).run_forever();
+    Forwarder(inboundConfig, outboundConfig).run_forever();
 
     return 0;
 }

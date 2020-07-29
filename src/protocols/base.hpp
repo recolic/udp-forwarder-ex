@@ -23,40 +23,40 @@ namespace Protocols {
 		BaseOutbound(string outboundConfig) {
 			loadConfig(outboundConfig);
 		}
-		virtual ~BaseOutbound = default;
+		virtual ~BaseOutbound() = default;
 
 		// Init data structures.
 		virtual void loadConfig(string config) = 0;
 
 		// InboundThread calls this function. Check the mapping between senderId and serverConn, wake up listenThread, and deliver the msg. 
-		virtual void handleMessage(string binaryMessage, string senderId) = 0;
+		virtual void forwardMessageToInbound(string binaryMessage, string senderId) = 0;
 
 		// Listen the PIPE. handleMessage will wake up this thread from epoll.
 		// Also listen the connection fileDescriptors.
 		virtual void listenForever(BaseInbound *previousHop) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
-		fd_t ipcPipeOutboundEnd = -1;
+		sockfd_t ipcPipe = -1;
 	};
 
 	struct BaseInbound : rlib::noncopyable {
 		BaseInbound(string inboundConfig) {
 			loadConfig(inboundConfig);
 		}
-		virtual ~BaseInbound = default;
+		virtual ~BaseInbound() = default;
 
 		// Init data structures.
 		virtual void loadConfig(string config) = 0;
 
 		// OutboundThread calls this function. Wake up 'listenForever' thread, and send back a message. Outbound provides the senderId.
-		virtual void handleMessage(string binaryMessage, string senderId) = 0;
+		virtual void forwardMessageToOutbound(string binaryMessage, string senderId) = 0;
 
 		// Listen the addr:port in config, for inbound connection.
 		// Also listen the accepted connection fileDescriptors, and listen the PIPE.
 		virtual void listenForever(BaseOutbound *nextHop) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
-		fd_t ipcPipeInboundEnd = -1;
+		sockfd_t ipcPipe = -1;
 	};
 
 	// TODO: PIPE only works on linux epoll. The windows epoll only works on SOCKET. 
