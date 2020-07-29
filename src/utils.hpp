@@ -89,6 +89,10 @@ inline auto mk_tcp_pipe() {
     return std::make_pair(connfd_cli_side, connfd_srv_side);
 }
 
+#define dynamic_assert(expr, msg) do { \
+    if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":" __LINE__ " F(" __func__ "), {}. Errno={}, strerror={}", (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
+} while(false)
+
 
 #endif
 
