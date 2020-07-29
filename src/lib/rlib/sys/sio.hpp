@@ -504,6 +504,11 @@ namespace rlib {
                 currvptr = (char *)vptr + current / 2;
             }
         }
+        static void close_ex(sockfd_t fd) {
+            if (closesocket(fd) == SOCKET_ERROR) {
+                throw std::runtime_error("closeSocket failed. error code: " + std::to_string(WSAGetLastError()));
+            }
+        }
 #else 
     // POSIX sockIO
     public:
@@ -587,6 +592,11 @@ namespace rlib {
                     return -1;
                 }
                 currvptr = (char *)vptr + current / 2;
+            }
+        }
+        static void close_ex(sockfd_t fd) {
+            if (close(fd) == -1) {
+                throw std::runtime_error("close failed. error code: " + std::to_string(errno));
             }
         }
 #endif

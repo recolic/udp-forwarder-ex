@@ -13,6 +13,9 @@
 #include <wepoll.h>
 #endif
 
+#include <string>
+using std::string;
+
 struct SockAddr {
     union {
         sockaddr_storage addr_storage;
@@ -20,7 +23,7 @@ struct SockAddr {
         sockaddr_in in4;
         sockaddr_in6 in6;
     };
-    int len;
+    socklen_t len;
 };
 
 struct ConnectionMapping {

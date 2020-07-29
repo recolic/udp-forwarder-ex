@@ -16,6 +16,8 @@ User
 */
 
 namespace Protocols {
+	struct BaseInbound;
+
 	// Outbound holds the senderId=>nextHopFd mapping.
 	// senderId is "$ip@$port", for example, `fe80:8100::1@1080`. 
 	// Note: this interface works for both TCP and UDP.

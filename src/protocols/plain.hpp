@@ -20,14 +20,14 @@ namespace Protocols {
 		}
 		virtual void forwardMessageToOutbound(string binaryMessage, string senderId) override {
 			// Outbound calls this function, to alert the inbound listener thread, for the new msg.
-
-
+			rlib::sockIO::send_msg(ipcPipe, senderId);
+			rlib::sockIO::send_msg(ipcPipe, binaryMessage);
 		}
 		virtual void listenForever(BaseOutbound* nextHop) override {
 			std::tie(this->ipcPipe, nextHop->ipcPipe) = mk_tcp_pipe();
 
 			auto listenFd = rlib::quick_listen(listenAddr, listenPort, true);
-			rlib_defer([&] {close(listenFd);});
+			rlib_defer([&] {rlib::sockIO::close_ex(listenFd);});
 
 			auto epollFd = epoll_create1(0);
 			dynamic_assert((int)epollFd != -1, "epoll_create1 failed");

@@ -30,6 +30,11 @@ public:
         if (ptrOutbound) delete ptrOutbound;
     }
 
+    [[noreturn]] void runForever() {
+        std::thread([this] {ptrInbound->listenForever(ptrOutbound);}).detach();
+        ptrOutbound->listenForever(ptrInbound); // Blocks
+    }
+
 
 private:
     Protocols::BaseInbound *ptrInbound;

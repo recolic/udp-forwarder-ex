@@ -11,6 +11,9 @@ using namespace std::chrono_literals;
 
 #if RLIB_OS_ID == OS_WINDOWS
     #define windows_main main
+    #ifdef ERROR
+    #undef ERROR
+    #endif
 #else
     #define real_main main
 #endif
@@ -39,7 +42,7 @@ int real_main(int argc, char **argv) {
     else
         throw std::runtime_error("Unknown log level: " + log_level);
 
-    Forwarder(inboundConfig, outboundConfig).run_forever();
+    Forwarder(inboundConfig, outboundConfig).runForever();
 
     return 0;
 }
