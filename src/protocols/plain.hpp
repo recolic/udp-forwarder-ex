@@ -34,11 +34,36 @@ namespace Protocols {
 			epoll_event events[MAX_EVENTS];
 			char buffer[DGRAM_BUFFER_SIZE];
 			// WARN: If you want to modify this program to work for both TCP and UDP, PLEASE use rlib::sockIO::recv instead of fixed buffer.
-			
+
+			auto onEvent = [&](auto activeFd) {
+				if (activeFd == ipcPipeInboundEnd) {
+					// Outbound gave me a message to forward! Send it. 
+					auto targetClientId = rlib::sockIO::recv_msg(activeFd);
+					auto msg = rlib::sockIO::recv_msg(activeFd);
+
+					auto [clientAddr, clientPort] = ConnectionMapping::parseClientId(targetClientId);
+
+
+				}
+				else if (activeFd == listenFd) {
+					SockAddr clientAddr;
+					auto ret = recvfrom(activeFd, buffer, sizeof(buffer), 0, &clientAddr.addr, &clientAddr.len);
+					if (ret == -1) throw std::runtime_error("recvfrom failed. ");
+
+
+				}
+
+			};
+
 			rlog.info("PlainListener listening InboundPort [{}]:{} ...", listenAddr, listenPort);
 			while (true) {
-				// ...
-				// epoll
+				auto nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1);
+				if (nfds == -1)
+					throw std::runtime_error("epoll_wait failed.");
+				
+				for (auto cter = 0; cter < nfds; ++cter) {
+					onEvent(events[cter].data.fd);
+				}
 			}
 
 		}

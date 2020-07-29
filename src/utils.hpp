@@ -4,6 +4,7 @@
 #include <rlib/sys/os.hpp>
 #include <rlib/sys/sio.hpp>
 #include <thread>
+#include <unordered_map>
 #include "common.hpp"
 
 #if RLIB_OS_ID == OS_LINUX
@@ -12,6 +13,32 @@
 #include <wepoll.h>
 #endif
 
+struct SockAddr {
+    union {
+        sockaddr_storage addr_storage;
+        sockaddr addr;
+        sockaddr_in in4;
+        sockaddr_in6 in6;
+    };
+    int len;
+};
+
+struct ConnectionMapping {
+    std::unordered_map<string, fd_t> client2server;
+    std::unordered_multimap<fd_t, string> server2client;
+    static string makeClientId(const SockAddr &osStrust) const {
+        // ClientId is a binary string.
+        string result(sizeof(osStruct), '\0');
+        std::memcpy(result.data(), &osStruct, sizeof(osStrust));
+        return result;
+    }
+    static void parseClientId(const string &clientId, SockAddr &output) const {
+        static_assert(sizeof(output) == sizeof(SockAddr), "error: programming error detected.");
+        if (clientId.size() != sizeof(output))
+            throw std::invalid_argument("parseClientId, invalid input binary string length.");
+        std::memcpy(&output, clientId.data(), sizeof(output));
+    }
+};
 
 inline void epoll_add_fd(fd_t epollFd, fd_t fd) {
     epoll_event event {
