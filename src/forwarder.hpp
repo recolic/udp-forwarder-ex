@@ -14,6 +14,23 @@
 using std::string;
 
 
+// This function parse the FilterConfig string for you. Register implemented modules here!
+inline Filters::BaseFilter* CreateFilterFromConfig(rlib::string filterConfig) {
+	Filters::BaseFilter *newFilter = nullptr;
+    if (filterConfig.starts_with("aes@"))
+        newFilter = new Filters::AESFilter();
+    else if (filterConfig.starts_with("xor@"))
+        newFilter = new Filters::XorFilter(); // these filters were not deleted. just a note.
+	else if (filterConfig.starts_with("reverse@")) {
+		auto newFilterConfig = filterConfig.substr(8);
+		newFilter = new Filters::ReversedFilter(CreateFilterFromConfig(newFilterConfig), true);
+	}
+    else
+        throw std::invalid_argument("Unknown filter in filterConfig item: " + filterConfig);
+
+    newFilter->loadConfig(filterConfig);
+    return newFilter;
+}
 
 class Forwarder {
 public:
@@ -36,19 +53,8 @@ public:
 
 
         std::list<Filters::BaseFilter*> chainedFilters;
-        for (auto &&filterConfig : filterConfigs) {
-            Filters::BaseFilter *newFilter = nullptr;
-            if (filterConfig.starts_with("aes"))
-                newFilter = new Filters::AESFilter();
-            else if (filterConfig.starts_with("xor"))
-                newFilter = new Filters::XorFilter(); // these filters were not deleted. just a note.
-            else
-                throw std::invalid_argument("Unknown filter in filterConfig item: " + filterConfig);
-
-            newFilter->loadConfig(filterConfig);
-            chainedFilters.push_back(newFilter);
-        }
-
+        for (auto &&filterConfig : filterConfigs)
+            chainedFilters.push_back(CreateFilterFromConfig(filterConfig));
         ptrFilter = new Filters::ChainedFilters(chainedFilters);
     }
 

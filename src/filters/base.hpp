@@ -30,7 +30,7 @@ namespace Filters {
 	};
 
 	struct ChainedFilters : public BaseFilter {
-		ChainedFilters(const std::list<Filters::BaseFilter*>& chainedFilters)
+		explicit ChainedFilters(const std::list<Filters::BaseFilter*>& chainedFilters)
 			: chainedFilters(chainedFilters) {}
 
 		// Usually the encrypt/encode/obfs function.
@@ -42,7 +42,7 @@ namespace Filters {
 		}
 
 		// Usually the decrypt/decode/de-obfs function.
-		virtual string convertBackward(string binaryDatagram) {
+		virtual string convertBackward(string binaryDatagram) override {
 			for (auto iter = chainedFilters.rbegin(); iter != chainedFilters.rend(); ++iter) {
 				binaryDatagram = (*iter)->convertForward(binaryDatagram);
 			}
@@ -51,6 +51,29 @@ namespace Filters {
 
 		const std::list<Filters::BaseFilter*>& chainedFilters;
 	};
+
+	struct ReversedFilter : public BaseFilter {
+		explicit ReversedFilter(BaseFilter* real, bool I_should_delete = false) : real(real), I_should_delete(I_should_delete) {}
+
+		virtual ~ReversedFilter() {
+			if (I_should_delete)
+				delete real;
+		}
+
+		// Usually the encrypt/encode/obfs function.
+		virtual string convertForward(string binaryDatagram) override {
+			return real->convertBackward(binaryDatagram);
+		}
+
+		// Usually the decrypt/decode/de-obfs function.
+		virtual string convertBackward(string binaryDatagram) override {
+			return real->convertForward(binaryDatagram);
+		}
+
+		bool I_should_delete = false;
+		BaseFilter* real;
+	};
+
 }
 
 #endif

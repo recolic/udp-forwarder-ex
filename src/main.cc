@@ -26,7 +26,7 @@ int real_main(int argc, char **argv) {
         rlog.info("  '$method@$params', available methods: ");
         rlog.info("  'plain@$addr@$port', 'misc@$addr@$portRange@$psk'");
         rlog.info("There could be multiple --filter, but they MUST be in correct order. ");
-        rlog.info("available filters: 'aes@$password' , 'xor@$password'");
+        rlog.info("available filters: 'aes@$password' , 'xor@$password', 'reverse@$otherFilter'");
         return 0;
     }
     auto inboundConfig = args.getValueArg("-i");
