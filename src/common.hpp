@@ -16,8 +16,14 @@ constexpr size_t DGRAM_BUFFER_SIZE = 20480;
 //   to the real openvpn server.
 constexpr size_t SERVER_ENCRYPT_CONNECTION_TIMEOUT_SECONDS = 60;
 
+#include <random> 
 // MAGIC PORT NUMBER! Warning! Used for Inbound - Outbound IPC talking. Windows wepoll doesn't support PIPE, so I have to use this. 
-constexpr uint16_t TCP_TMP_PORT_NUMBER = 50999;
+uint16_t get_tmp_tcp_port_number() {
+	std::random_device rd;
+    std::mt19937 mt(rd());
+    std::uniform_int_distribution<int> dist(40000, 60000);
+    return dist(mt);
+}
 
 #endif
 

@@ -79,12 +79,14 @@ inline auto mkpipe() {
 
 inline auto mk_tcp_pipe() {
     sockfd_t connfd_cli_side, connfd_srv_side;
-    auto listenfd = rlib::quick_listen("::1", TCP_TMP_PORT_NUMBER);
+    auto tmp_port = get_tmp_tcp_port_number();
+    auto listenfd = rlib::quick_listen("::1", tmp_port); // We have no UnixSocket on Windows.
     auto serverThread = std::thread([&] {
         connfd_srv_side = rlib::quick_accept(listenfd);
     });
-    connfd_cli_side = rlib::quick_connect("::1", TCP_TMP_PORT_NUMBER);
+    connfd_cli_side = rlib::quick_connect("::1", tmp_port);
     serverThread.join();
+    rlib::sockIO::close_ex(listenfd);
     return std::make_pair(connfd_cli_side, connfd_srv_side);
 }
 

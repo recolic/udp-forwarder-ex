@@ -21,7 +21,7 @@ namespace Filters {
 		virtual string convertForward(string datagram) override {
 			auto curr_key_digit = 0;
 			for (auto offset = 0; offset < datagram.size(); ++offset) {
-				datagram[0] ^= key[curr_key_digit++];
+				datagram[offset] ^= key[curr_key_digit++];
 			}
 			return datagram;
 		}

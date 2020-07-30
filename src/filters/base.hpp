@@ -44,7 +44,7 @@ namespace Filters {
 		// Usually the decrypt/decode/de-obfs function.
 		virtual string convertBackward(string binaryDatagram) override {
 			for (auto iter = chainedFilters.rbegin(); iter != chainedFilters.rend(); ++iter) {
-				binaryDatagram = (*iter)->convertForward(binaryDatagram);
+				binaryDatagram = (*iter)->convertBackward(binaryDatagram);
 			}
 			return binaryDatagram;
 		}
