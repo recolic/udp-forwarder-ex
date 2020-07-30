@@ -1,4 +1,4 @@
-# UDP forwarder - dynPort
+# UDP forwarder EX
 
 Create a UDP tunnel to forward a udp port. The tunnel applies some magic to trick the noob Great Firewall deep learning VPN
 detection. 
@@ -17,7 +17,7 @@ Inspired by a naive udp-forward. I want to test what would happen, if I change t
 ```
 mkdir build && cd build
 cmake .. && make
-./udp_forwarder_ng [args ...]
+./udp-forwarder [args ...]
 ```
 
 ## Common Deployment
