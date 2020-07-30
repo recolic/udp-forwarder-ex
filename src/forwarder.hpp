@@ -20,7 +20,7 @@ public:
     Forwarder(const rlib::string &inboundConfig, const rlib::string &outboundConfig, const std::list<rlib::string> &filterConfigs) {
         if (inboundConfig.starts_with("plain"))
             ptrInbound = new Protocols::PlainInbound;
-        else if (inboundConfig.starts_with("misc"))
+        else if (inboundConfig.starts_with("dynport"))
             ptrInbound = nullptr; // TODO
         else
             throw std::invalid_argument("Unknown protocol in inboundConfig " + inboundConfig);
@@ -28,7 +28,7 @@ public:
 
         if (outboundConfig.starts_with("plain"))
             ptrOutbound = new Protocols::PlainOutbound;
-        else if (outboundConfig.starts_with("misc"))
+        else if (outboundConfig.starts_with("dynport"))
             ptrOutbound = nullptr; // TODO
         else
             throw std::invalid_argument("Unknown protocol in outboundConfig " + outboundConfig);

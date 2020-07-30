@@ -10,11 +10,10 @@ namespace Protocols {
 	public:
 		virtual loadConfig(string config) override {
 			auto ar = rlib::string(config).split('@'); // Also works for ipv6.
-			if (ar.size() != 4)
-				throw std::invalid_argument("Wrong parameter string for protocol 'misc'. Example:    plain@fe00:1e10:ce95:1@1080-3080@MyPassword");
+			if (ar.size() != 3)
+				throw std::invalid_argument("Wrong parameter string for protocol 'misc'. Example:    plain@fe00:1e10:ce95:1@1080-3080");
 			listenAddr = ar[1];
 			// listenPort = ar[2].as<uint16_t>();
-			psk = ar[3];
 
 			// listen these ports.
 
