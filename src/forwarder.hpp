@@ -55,7 +55,7 @@ public:
         std::list<Filters::BaseFilter*> chainedFilters;
         for (auto &&filterConfig : filterConfigs)
             chainedFilters.push_back(CreateFilterFromConfig(filterConfig));
-        ptrFilter = new Filters::ChainedFilters(chainedFilters);
+        ptrFilter = new Filters::ChainedFilters(std::move(chainedFilters));
     }
 
     ~Forwarder() {

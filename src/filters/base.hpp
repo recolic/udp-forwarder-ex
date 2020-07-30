@@ -30,7 +30,7 @@ namespace Filters {
 	};
 
 	struct ChainedFilters : public BaseFilter {
-		explicit ChainedFilters(const std::list<Filters::BaseFilter*>& chainedFilters)
+		explicit ChainedFilters(std::list<Filters::BaseFilter*>&& chainedFilters)
 			: chainedFilters(chainedFilters) {}
 
 		// Usually the encrypt/encode/obfs function.
@@ -49,7 +49,7 @@ namespace Filters {
 			return binaryDatagram;
 		}
 
-		const std::list<Filters::BaseFilter*>& chainedFilters;
+		std::list<Filters::BaseFilter*> chainedFilters;
 	};
 
 	struct ReversedFilter : public BaseFilter {
