@@ -4,8 +4,8 @@
 #include <protocols/base.hpp>
 #include <rlib/sys/sio.hpp>
 #include <rlib/string.hpp>
-#include <utils.hpp>
-#include <common.hpp>
+#include "utils.hpp"
+#include "common.hpp"
 
 #if RLIB_OS_ID == OS_LINUX
 #include <linux/sched.h>
@@ -46,7 +46,7 @@ namespace Protocols {
 			rlib::sockIO::send_msg(ipcPipe, senderId);
 			rlib::sockIO::send_msg(ipcPipe, binaryMessage);
 		}
-		virtual void listenForever(BaseOutbound* nextHop) override {
+		virtual void listenForever(BaseOutbound* nextHop, Filters::BaseFilter *filter) override {
 			std::tie(this->ipcPipe, nextHop->ipcPipe) = mk_tcp_pipe();
 
 			// ----------------------- Initialization / Setup ------------------------------
@@ -59,8 +59,6 @@ namespace Protocols {
 			epoll_add_fd(epollFd, ipcPipe);
 
 			// ----------------------- Process an event ------------------------------
-			auto udpSenderSocket = socket(AF_INET, SOCK_DGRAM, 0);
-			dynamic_assert(udpSenderSocket > 0, "socket create failed.");
 			std::string msgBuffer(DGRAM_BUFFER_SIZE, '\0');
 			// WARN: If you want to modify this program to work for TCP, PLEASE use rlib::sockIO::recv instead of fixed buffer.
 			auto onEvent = [&](auto activeFd) {
@@ -80,7 +78,7 @@ namespace Protocols {
 					auto msgLength = recvfrom(activeFd, msgBuffer.data(), msgBuffer.size(), 0, &clientAddr.addr, &clientAddr.len);
 					dynamic_assert(msgLength != -1, "recvfrom failed");
 
-					forwardMessageToOutbound(msgBuffer.substr(0, msgLength), ClientIdUtils::makeClientId(clientAddr));
+					forwardMessageToOutbound(filter->convertForward(msgBuffer.substr(0, msgLength)), ClientIdUtils::makeClientId(clientAddr));
 				}
 			};
 
@@ -120,7 +118,7 @@ namespace Protocols {
 
 		// Listen the PIPE. handleMessage will wake up this thread from epoll.
 		// Also listen the connection fileDescriptors.
-		virtual void listenForever(BaseInbound* previousHop) override {
+		virtual void listenForever(BaseInbound* previousHop, Filters::BaseFilter *filter) override {
 
 			// ----------------------- Initialization / Setup ------------------------------
 			auto epollFd = epoll_create1(0);
@@ -172,7 +170,7 @@ namespace Protocols {
 
 					dynamic_assert(connectionMap.server2client.count(activeFd) > 0, "connectionMap MUST contain server connfd. ");
 
-					forwardMessageToInbound(msgBuffer.substr(0, msgLength), connectionMap.server2client.at(activeFd));
+					forwardMessageToInbound(filter->convertBackward(msgBuffer.substr(0, msgLength)), connectionMap.server2client.at(activeFd));
 				}
 			};
 

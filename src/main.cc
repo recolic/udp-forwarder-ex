@@ -21,10 +21,12 @@ using namespace std::chrono_literals;
 int real_main(int argc, char **argv) {
     rlib::opt_parser args(argc, argv);
     if(args.getBoolArg("--help", "-h")) {
-        rlog.info("Usage: {} -i $InboundConfig -o $OutboundConfig [--log=error/info/verbose/debug]"_rs.format(args.getSelf()));
+        rlog.info("Usage: {} -i $InboundConfig -o $OutboundConfig [--filter $filterConfig ...] [--log=error/info/verbose/debug]"_rs.format(args.getSelf()));
         rlog.info("  InboundConfig and OutboundConfig are in this format: ");
-        rlog.info("  '$method:$params', available methods: ");
-        rlog.info("  'plain:$addr:$port', 'misc:$addr:$portRange:$psk'");
+        rlog.info("  '$method@$params', available methods: ");
+        rlog.info("  'plain@$addr@$port', 'misc@$addr@$portRange@$psk'");
+        rlog.info("There could be multiple --filter, but they MUST be in correct order. ");
+        rlog.info("available filters: 'aes@$password' , 'xor@$password'");
         return 0;
     }
     auto inboundConfig = args.getValueArg("-i");
@@ -42,7 +44,16 @@ int real_main(int argc, char **argv) {
     else
         throw std::runtime_error("Unknown log level: " + log_level);
 
-    Forwarder(inboundConfig, outboundConfig).runForever();
+    std::list<rlib::string> filterConfigs;
+    while (true) {
+        if (auto filterConfig = args.getValueArg("--filter", false, ""); !filterConfig.empty()) {
+            filterConfigs.push_back(filterConfig);
+        }
+        else
+            break;
+    }
+
+    Forwarder(inboundConfig, outboundConfig, filterConfigs).runForever();
 
     return 0;
 }

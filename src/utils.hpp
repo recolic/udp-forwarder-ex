@@ -31,13 +31,15 @@ struct ClientIdUtils {
         // ClientId is a binary string.
         static_assert(sizeof(osStruct) == sizeof(SockAddr), "error: programming error detected.");
         string result(sizeof(osStruct), '\0');
-        std::memcpy(result.data(), &osStruct, sizeof(osStruct));
+		// cross-platform TODO: byte-order problem.
+        std::memcpy((void *)result.data(), &osStruct, sizeof(osStruct));
         return result;
     }
     static SockAddr parseClientId(const string &clientId) {
         SockAddr result;
         if (clientId.size() != sizeof(result))
             throw std::invalid_argument("parseClientId, invalid input binary string length.");
+		// cross-platform TODO: byte-order problem.
         std::memcpy(&result, clientId.data(), sizeof(result));
         return result;
     }
@@ -90,6 +92,22 @@ inline auto mk_tcp_pipe() {
     if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":{} F({}), {}. Errno={}, strerror={}", __LINE__, __func__, (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
 } while(false)
 
+
+template <size_t result_length>
+string pskToKey(string psk) {
+	// Convert user-provided variable-length psk to a 32-byte key.
+    using HashType = decltype(std::hash<std::string>{}.operator()(std::string())); // std::result_of_t<std::hash<std::string>::operator()>;
+	static_assert(result_length % sizeof(HashType) == 0, "pskToKey: result_length MUST be multiply of HashResultSize.");
+
+	string result(result_length, '\0');
+	auto hashObject = std::hash<std::string>{};
+	for (auto i = 0; i < result.size(); i += sizeof(HashType)) {
+		auto hashResult = hashObject(psk);
+		// cross-platform TODO: byte-order problem.
+		std::memcpy(result.data() + i, &hashResult, sizeof(HashType));
+	}
+	return result;
+}
 
 
 #endif

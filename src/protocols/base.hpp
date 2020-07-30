@@ -1,6 +1,7 @@
 #ifndef UDP_FORWARDER_PROT_BASE_HPP_
 #define UDP_FORWARDER_PROT_BASE_HPP_ 1
 
+#include "filters/base.hpp"
 #include <rlib/class_decorator.hpp>
 #include <string>
 using std::string;
@@ -25,14 +26,14 @@ namespace Protocols {
 		virtual ~BaseOutbound() = default;
 
 		// Init data structures.
-		virtual void loadConfig(string config) = 0;
+		virtual void loadConfig(string config) {}
 
 		// InboundThread calls this function. Check the mapping between senderId and serverConn, wake up listenThread, and deliver the msg. 
 		virtual void forwardMessageToInbound(string binaryMessage, string senderId) = 0;
 
 		// Listen the PIPE. handleMessage will wake up this thread from epoll.
 		// Also listen the connection fileDescriptors.
-		virtual void listenForever(BaseInbound *previousHop) = 0;
+		virtual void listenForever(BaseInbound *previousHop, Filters::BaseFilter *filter) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
 		volatile sockfd_t ipcPipe = -1;
@@ -42,14 +43,14 @@ namespace Protocols {
 		virtual ~BaseInbound() = default;
 
 		// Init data structures.
-		virtual void loadConfig(string config) = 0;
+		virtual void loadConfig(string config) {}
 
 		// OutboundThread calls this function. Wake up 'listenForever' thread, and send back a message. Outbound provides the senderId.
 		virtual void forwardMessageToOutbound(string binaryMessage, string senderId) = 0;
 
 		// Listen the addr:port in config, for inbound connection.
 		// Also listen the accepted connection fileDescriptors, and listen the PIPE.
-		virtual void listenForever(BaseOutbound *nextHop) = 0;
+		virtual void listenForever(BaseOutbound *nextHop, Filters::BaseFilter *filter) = 0;
 
 		// Inbound.listenForever MUST initialize this field. 
 		volatile sockfd_t ipcPipe = -1;
