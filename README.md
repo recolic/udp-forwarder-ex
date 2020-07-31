@@ -8,7 +8,7 @@ Inspired by a naive udp-forward. I want to test what would happen, if I change t
 
 ## Design
 
-![explain.png](https://raw.githubusercontent.com/recolic/udp-forwarder-ex/master/res/explain.png)
+![explain.png](https://raw.githubusercontent.com/recolic/udp-forwarder-ex/master/res/explain.jpg)
 
 ## Build
 
