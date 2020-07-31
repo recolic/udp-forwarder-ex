@@ -38,7 +38,4 @@ dynport module (-i / -o dynport@fe80:1111::1@10000-11000)
 
 obfs method (quic and wechat video) (--filter obfs@quic@some.video.host.apple.com) (--filter obfs@wechat-video)
 
-## Common Deployment
-
-![solu.png](https://raw.githubusercontent.com/recolic/udp-forwarder-ex/master/res/solu.png)
 
