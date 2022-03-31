@@ -17,6 +17,30 @@ User
 */
 
 namespace Protocols {
+    // All protocol implementation must talk to each other with this Internal Bridge.
+    // This bridge is used to carry message from Inbound to Outbound in the same process.
+    struct InternalBridge : rlib::noncopyable {
+        explicit InternalBridge(Filters::BaseFilter *ptrFilter) : ptrFilter(ptrFilter) {
+            std::tie(ipcPipeInboundSide, ipcPipeOutboundSide) = mk_tcp_pipe();
+        }
+
+        void forwardInboundToOutbound(string binaryMessage, string senderId) {
+            // Inbound calls this function, to alert the Outbound thread to forward a message.
+            rlib::sockIO::send_msg(ipcPipeOutboundSide, senderId);
+            rlib::sockIO::send_msg(ipcPipeOutboundSide, ptrFilter->convertForward(binaryMessage));
+        }
+
+        void forwardOutboundToInbound(string binaryMessage, string senderId) {
+            // Outbound calls this function, to alert the Inbound thread to forward a message.
+            rlib::sockIO::send_msg(ipcPipeInboundSide, senderId);
+            rlib::sockIO::send_msg(ipcPipeInboundSide, ptrFilter->convertBackward(binaryMessage));
+        }
+
+        sockfd_t ipcPipeInboundSide = -1;
+        sockfd_t ipcPipeOutboundSide = -1;
+        Filters::BaseFilter *ptrFilter = nullptr;
+    };
+
 	struct BaseInbound;
 
 	// Outbound holds the senderId=>nextHopFd mapping.
@@ -28,15 +52,9 @@ namespace Protocols {
 		// Init data structures.
 		virtual void loadConfig(string config) {}
 
-		// InboundThread calls this function. Check the mapping between senderId and serverConn, wake up listenThread, and deliver the msg. 
-		virtual void forwardMessageToInbound(string binaryMessage, string senderId) = 0;
-
 		// Listen the PIPE. handleMessage will wake up this thread from epoll.
 		// Also listen the connection fileDescriptors.
-		virtual void listenForever(BaseInbound *previousHop, Filters::BaseFilter *filter) = 0;
-
-		// Inbound.listenForever MUST initialize this field. 
-		volatile sockfd_t ipcPipe = -1;
+		virtual void listenForever(BaseInbound *previousHop, InternalBridge *bridge) = 0;
 	};
 
 	struct BaseInbound : rlib::noncopyable {
@@ -45,18 +63,12 @@ namespace Protocols {
 		// Init data structures.
 		virtual void loadConfig(string config) {}
 
-		// OutboundThread calls this function. Wake up 'listenForever' thread, and send back a message. Outbound provides the senderId.
-		virtual void forwardMessageToOutbound(string binaryMessage, string senderId) = 0;
-
 		// Listen the addr:port in config, for inbound connection.
 		// Also listen the accepted connection fileDescriptors, and listen the PIPE.
-		virtual void listenForever(BaseOutbound *nextHop, Filters::BaseFilter *filter) = 0;
-
-		// Inbound.listenForever MUST initialize this field. 
-		volatile sockfd_t ipcPipe = -1;
+		virtual void listenForever(BaseOutbound *nextHop, InternalBridge *bridge) = 0;
 	};
 
-	// TODO: PIPE only works on linux epoll. The windows epoll only works on SOCKET. 
+	// TODO: PIPE only works on linux epoll. The windows epoll only works on SOCKET.
 	//       Do this if you would like to support windows. 
 }
 

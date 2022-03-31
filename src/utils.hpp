@@ -45,6 +45,10 @@ struct ClientIdUtils {
     }
 };
 
+#define dynamic_assert(expr, msg) do { \
+    if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":{} F({}), {}. Errno={}, strerror={}", __LINE__, __func__, (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
+} while(false)
+
 inline void epoll_add_fd(fd_t epollFd, sockfd_t fd) {
     epoll_event event;
     event.events = EPOLLIN;
@@ -90,9 +94,13 @@ inline auto mk_tcp_pipe() {
     return std::make_pair(connfd_cli_side, connfd_srv_side);
 }
 
-#define dynamic_assert(expr, msg) do { \
-    if(!(expr)) { rlog.error("Runtime Assertion Failed: AT " __FILE__ ":{} F({}), {}. Errno={}, strerror={}", __LINE__, __func__, (msg), errno, strerror(errno)); throw std::runtime_error("dynamic_assert failed. See rlog.error."); } \
-} while(false)
+// // Disabled because posix pipe is not bidirectional.
+// inline auto make_posix_pipe() {
+//     int pipefd[2];
+//     auto ret = pipe(pipefd);
+//     dynamic_assert(ret != -1, "Failed in make_posix_pipe, pipe call failed. ");
+//     return std::make_pair(pipefd[0], pipefd[1]);
+// }
 
 
 template <size_t result_length>

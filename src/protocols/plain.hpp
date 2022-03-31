@@ -41,14 +41,7 @@ namespace Protocols {
 			listenAddr = ar[1];
 			listenPort = ar[2].as<uint16_t>();
 		}
-		virtual void forwardMessageToOutbound(string binaryMessage, string senderId) override {
-			// Outbound calls this function, to alert the inbound listener thread, for the new msg.
-			rlib::sockIO::send_msg(ipcPipe, senderId);
-			rlib::sockIO::send_msg(ipcPipe, binaryMessage);
-		}
-		virtual void listenForever(BaseOutbound* nextHop, Filters::BaseFilter *filter) override {
-			std::tie(this->ipcPipe, nextHop->ipcPipe) = mk_tcp_pipe();
-
+		virtual void listenForever(BaseOutbound* nextHop, InternalBridge *bridge) override {
 			// ----------------------- Initialization / Setup ------------------------------
 			auto listenFd = rlib::quick_listen(listenAddr, listenPort, true);
 			rlib_defer([&] {rlib::sockIO::close_ex(listenFd);});
@@ -56,13 +49,13 @@ namespace Protocols {
 			auto epollFd = epoll_create1(0);
 			dynamic_assert((int)epollFd != -1, "epoll_create1 failed");
 			epoll_add_fd(epollFd, listenFd);
-			epoll_add_fd(epollFd, ipcPipe);
+			epoll_add_fd(epollFd, bridge->ipcPipeInboundSide);
 
 			// ----------------------- Process an event ------------------------------
 			std::string msgBuffer(DGRAM_BUFFER_SIZE, '\0');
 			// WARN: If you want to modify this program to work for TCP, PLEASE use rlib::sockIO::recv instead of fixed buffer.
 			auto onEvent = [&](auto activeFd) {
-				if (activeFd == ipcPipe) {
+				if (activeFd == bridge->ipcPipeInboundSide) {
 					// Outbound gave me a message to forward! Send it. 
                     rlog.debug("Inbound event: from outbound msg. ");
 					auto targetClientId = rlib::sockIO::recv_msg(activeFd);
@@ -78,7 +71,7 @@ namespace Protocols {
 					auto msgLength = recvfrom(activeFd, msgBuffer.data(), msgBuffer.size(), 0, &clientAddr.addr, &clientAddr.len);
 					dynamic_assert(msgLength != -1, "recvfrom failed");
 
-					forwardMessageToOutbound(filter->convertForward(msgBuffer.substr(0, msgLength)), ClientIdUtils::makeClientId(clientAddr));
+                    bridge->forwardInboundToOutbound(msgBuffer.substr(0, msgLength), ClientIdUtils::makeClientId(clientAddr));
 				}
 			};
 
@@ -110,32 +103,21 @@ namespace Protocols {
 			serverAddr = ar[1];
 			serverPort = ar[2].as<uint16_t>();
 		}
-		// InboundThread calls this function. Check the mapping between senderId and serverConn, wake up listenThread, and deliver the msg. 
-		virtual void forwardMessageToInbound(string binaryMessage, string senderId) override {
-			rlib::sockIO::send_msg(ipcPipe, senderId);
-			rlib::sockIO::send_msg(ipcPipe, binaryMessage);
-		}
 
 		// Listen the PIPE. handleMessage will wake up this thread from epoll.
 		// Also listen the connection fileDescriptors.
-		virtual void listenForever(BaseInbound* previousHop, Filters::BaseFilter *filter) override {
+		virtual void listenForever(BaseInbound* previousHop, InternalBridge *bridge) override {
 
 			// ----------------------- Initialization / Setup ------------------------------
 			auto epollFd = epoll_create1(0);
 			dynamic_assert((int)epollFd != -1, "epoll_create1 failed");
 
-			while (ipcPipe == -1) {
-				; // Sleep until InboundThread initializes the pipe.
-#ifdef cond_resched
-				cond_resched();
-#endif
-			}
-			epoll_add_fd(epollFd, ipcPipe);
+			epoll_add_fd(epollFd, bridge->ipcPipeOutboundSide);
 
 			// ----------------------- Process an event ------------------------------
 			std::string msgBuffer(DGRAM_BUFFER_SIZE, '\0');
 			auto onEvent = [&](auto activeFd) {
-				if (activeFd == ipcPipe) {
+				if (activeFd == bridge->ipcPipeOutboundSide) {
                     rlog.debug("Outbound event: from inbound msg. ");
 					// Inbound gave me a message to forward! Send it. 
 					auto targetClientId = rlib::sockIO::recv_msg(activeFd);
@@ -162,7 +144,7 @@ namespace Protocols {
 					auto msgLength = recv(activeFd, msgBuffer.data(), msgBuffer.size(), 0);
 					dynamic_assert(msgLength != -1, "recv failed");
 					if (msgLength == 0) {
-						// TODO: close the socket, and notify Inbound to destory data structures.
+						// TODO: close the socket, and notify Inbound to destroy data structures.
 						epoll_del_fd(epollFd, activeFd);
 						connectionMap.del(activeFd);
 						rlib::sockIO::close_ex(activeFd);
@@ -170,7 +152,7 @@ namespace Protocols {
 
 					dynamic_assert(connectionMap.server2client.count(activeFd) > 0, "connectionMap MUST contain server connfd. ");
 
-					forwardMessageToInbound(filter->convertBackward(msgBuffer.substr(0, msgLength)), connectionMap.server2client.at(activeFd));
+                    bridge->forwardOutboundToInbound(msgBuffer.substr(0, msgLength), connectionMap.server2client.at(activeFd));
 				}
 			};
 

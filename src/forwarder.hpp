@@ -52,28 +52,33 @@ public:
         ptrOutbound->loadConfig(outboundConfig);
 
 
-        std::list<Filters::BaseFilter*> chainedFilters;
-        for (auto &&filterConfig : filterConfigs)
-            chainedFilters.push_back(CreateFilterFromConfig(filterConfig));
-        ptrFilter = new Filters::ChainedFilters(std::move(chainedFilters));
+        if(filterConfigs.size() == 1) {
+            ptrBridge = new Protocols::InternalBridge(CreateFilterFromConfig(*filterConfigs.begin()));
+        } else {
+            std::list<Filters::BaseFilter*> chainedFilters;
+            for (auto &&filterConfig : filterConfigs)
+                chainedFilters.push_back(CreateFilterFromConfig(filterConfig));
+            ptrBridge = new Protocols::InternalBridge(new Filters::ChainedFilters(std::move(chainedFilters)));
+        }
     }
 
     ~Forwarder() {
-        if (ptrInbound) delete ptrInbound;
-        if (ptrOutbound) delete ptrOutbound;
-        if (ptrFilter) delete ptrFilter;
+        delete ptrInbound;
+        delete ptrOutbound;
+        if (ptrBridge) delete ptrBridge->ptrFilter;
+        delete ptrBridge;
     }
 
     [[noreturn]] void runForever() {
-        std::thread([this] {ptrInbound->listenForever(ptrOutbound, ptrFilter);}).detach();
-        ptrOutbound->listenForever(ptrInbound, ptrFilter); // Blocks
+        std::thread([this] {ptrInbound->listenForever(ptrOutbound, ptrBridge);}).detach();
+        ptrOutbound->listenForever(ptrInbound, ptrBridge); // Blocks
     }
 
 
 private:
-    Protocols::BaseInbound *ptrInbound;
-    Protocols::BaseOutbound *ptrOutbound;
-    Filters::BaseFilter *ptrFilter;
+    Protocols::BaseInbound *ptrInbound = nullptr;
+    Protocols::BaseOutbound *ptrOutbound = nullptr;
+    Protocols::InternalBridge *ptrBridge = nullptr;
 };
 
 #endif
